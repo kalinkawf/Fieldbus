@@ -2,13 +2,26 @@
 #include <iomanip>
 #include <sstream>
 #include <vector>
-#include <limits>
 #include <string>
 #include <chrono>
 
-unsigned int getCRC(const std::vector<unsigned char>& data) {
-    // Algorytm
-    return 0x123478;
+
+uint16_t getCRC(const std::vector<uint8_t>& data) {
+    uint16_t crc = 0xFFFF; // Początkowa wartość CRC w protokole MODBUS
+
+    for (uint8_t byte : data) {
+        crc ^= byte;
+        for (int i = 0; i < 8; i++) {
+            if (crc & 0x0001) {
+                crc = (crc >> 1) ^ 0xA001; // XOR z wielomianem generującym
+            } else {
+                crc >>= 1;
+            }
+        }
+    }
+    uint8_t reg8 = crc >> 8;
+    return (crc << 8 | reg8);
+    // return crc;
 }
 
 bool isValidHexChar(char c) {
@@ -16,7 +29,7 @@ bool isValidHexChar(char c) {
 }
 
 int main() {
-    std::vector<unsigned char> byteSequence;
+    std::vector<uint8_t> byteSequence;
     std::string input;
 
     std::cout << "Podaj sekwencje bajtow w notacji hex: ";
@@ -24,7 +37,6 @@ int main() {
 
     if (input.size() % 2 != 0) {
         input.insert(input.size(), 1, '0');
-        std::cout << "Parzysta liczba znakow w notacji hex, Dodalem zero na koncu" << std::endl;
     }
 
     for (size_t i = 0; i < input.size(); i += 2) {
@@ -38,7 +50,7 @@ int main() {
         }
 
         std::stringstream hexStream(hexByte);
-        unsigned int byteValue;
+        uint8_t byteValue;
 
         hexStream >> std::hex >> byteValue;
 
@@ -47,7 +59,7 @@ int main() {
             return 1;
         }
 
-        byteSequence.push_back(static_cast<unsigned char>(byteValue));
+        byteSequence.push_back(byteValue);
     }
 
     if (byteSequence.size() > 256) {
@@ -55,7 +67,8 @@ int main() {
         return 1;
     }
 
-    unsigned int n;
+    // pobieranie liczby powtórzeń algorytmu
+    uint32_t n;
     std::cout << "Podaj liczbe n powtorzen algorytmu CRC (1 do 1000000000): ";
     std::cin >> n;
 
@@ -66,18 +79,19 @@ int main() {
 
     auto startTime = std::chrono::high_resolution_clock::now(); // Algorytm start
 
-    unsigned int totalCRC = 0;
+    uint16_t crcResult = 0;
+    
 
-    for (unsigned int i = 0; i < n; ++i) {
-        unsigned int crcResult = getCRC(byteSequence);
-        totalCRC += crcResult;
+    for (unsigned int i = 0; i< n; ++i) {
+        crcResult = getCRC(byteSequence);
     }
 
     auto endTime = std::chrono::high_resolution_clock::now(); // Algorytm koniec
     std::chrono::duration<double> duration = std::chrono::duration_cast<std::chrono::duration<double>>(endTime - startTime);
 
-    std::cout << "Suma CRC po " << n << " powtorzeniach: 0x" << std::hex << std::setw(8) << std::setfill('0') << totalCRC << std::dec << std::endl;
+    std::cout << "Suma CRC po " << n << " powtorzeniach: 0x" << std::hex << crcResult << std::dec << std::endl;
     std::cout << "Czas: " << duration.count() << "s" << std::endl;
 
+    std::cin.get(); // Czekaj na wciśnięcie klawisza Enter
     return 0;
 }
