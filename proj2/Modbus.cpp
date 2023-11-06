@@ -6,6 +6,42 @@
 #include <chrono>
 
 
+// Wielomian generujący dla CRC-16 (Reversed polynomial: 0xA001)
+const uint16_t crc16_polynomial = 0xA001;
+
+// Tablice LowByte i HiByte CRC-16
+uint8_t crc16_table_low[256];
+uint8_t crc16_table_high[256];
+
+// Inicjalizacja tablic CRC-16
+void initializeCRCTables() {
+    for (int i = 0; i < 256; i++) {
+        uint16_t crc = i;
+        for (int j = 0; j < 8; j++) {
+            if (crc & 1) {
+                crc = (crc >> 1) ^ crc16_polynomial;
+            } else {
+                crc >>= 1;
+            }
+        }
+        crc16_table_low[i] = static_cast<uint8_t>(crc & 0xFF);
+        crc16_table_high[i] = static_cast<uint8_t>((crc >> 8) & 0xFF);
+    }
+}
+
+// Funkcja do obliczania CRC-16
+uint16_t getTableCRC(const std::vector<uint8_t>& data) {
+    uint8_t crc_low = 0xFF;
+    uint8_t crc_high = 0xFF;
+    for (uint8_t byte : data) {
+        uint8_t index = crc_low ^ byte;
+        crc_low = crc16_table_low[index] ^ crc_high;
+        crc_high = crc16_table_high[index];
+    }
+
+    return (static_cast<uint16_t>(crc_high) << 8) | static_cast<uint16_t>(crc_low);
+}
+
 uint16_t getCRC(const std::vector<uint8_t>& data) {
     uint16_t crc = 0xFFFF; // Początkowa wartość CRC w protokole MODBUS
 
@@ -21,7 +57,6 @@ uint16_t getCRC(const std::vector<uint8_t>& data) {
     }
     uint8_t reg8 = crc >> 8;
     return (crc << 8 | reg8);
-    // return crc;
 }
 
 bool isValidHexChar(char c) {
@@ -29,6 +64,7 @@ bool isValidHexChar(char c) {
 }
 
 int main() {
+    initializeCRCTables();
     std::vector<uint8_t> byteSequence;
     std::string input;
 
