@@ -119,7 +119,7 @@ int main() {
     
 
     for (unsigned int i = 0; i< n; ++i) {
-        crcResult = getCRC(byteSequence);
+        crcResult = getTableCRC(byteSequence);
     }
 
     auto endTime = std::chrono::high_resolution_clock::now(); // Algorytm koniec
