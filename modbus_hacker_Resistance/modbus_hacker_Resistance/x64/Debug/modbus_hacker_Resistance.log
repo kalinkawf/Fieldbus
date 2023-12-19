@@ -1,2 +1,3 @@
 ﻿  modbus_hacker_Resistance.cpp
+C:\Fieldbus\modbus_hacker_Resistance\modbus_hacker_Resistance\modbus_hacker_Resistance.cpp(185,14): warning C4101: "data": lokalna zmienna, do której nie istnieje odwołanie
   modbus_hacker_Resistance.vcxproj -> C:\Fieldbus\modbus_hacker_Resistance\x64\Debug\modbus_hacker_Resistance.exe
